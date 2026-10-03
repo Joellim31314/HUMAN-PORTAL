@@ -157,9 +157,19 @@ export function SimWorkspace({
           </Link>
         </Button>
 
-        <h1 className="text-2xl font-semibold tracking-tight">
-          MISO Simulation — {area.name}
-        </h1>
+        <div className="flex items-center gap-3">
+          {product.image && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={product.image}
+              alt={product.name}
+              className="size-14 shrink-0 rounded-lg border object-cover"
+            />
+          )}
+          <h1 className="text-2xl font-semibold tracking-tight">
+            MISO Simulation — {area.name}
+          </h1>
+        </div>
         <p className="mt-1 text-sm text-muted-foreground">
           {extras ? (
             <>

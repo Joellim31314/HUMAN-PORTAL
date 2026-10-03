@@ -8,6 +8,7 @@ import {
   DemoFillButton,
   DEMO_FILL_EVENT,
 } from "@/components/demo/demo-fill-button"
+import { PackagingUpload } from "@/components/interview/packaging-upload"
 import { StagedLoader } from "@/components/staged-loader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -230,6 +231,13 @@ export function InterviewForm() {
               </div>
             </div>
           </div>
+          <PackagingUpload
+            image={form.image}
+            salience={form.packagingSalience}
+            onChange={(image, packagingSalience) =>
+              setForm((f) => ({ ...f, image, packagingSalience }))
+            }
+          />
           <div className="flex flex-col gap-1.5">
             <Label>Channels (optional)</Label>
             <div className="flex flex-wrap gap-2">

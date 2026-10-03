@@ -13,6 +13,8 @@ export interface ProductProfile {
   packSize: string
   status: "selling" | "prelaunch"
   channels: string[]
+  image?: string
+  packagingSalience?: number
 }
 
 export interface ProductBets {

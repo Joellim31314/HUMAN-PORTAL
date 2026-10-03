@@ -135,7 +135,10 @@ export function toProductInput(p: ProductAnswers, areaSlug: string) {
     category: mapCategory(p),
     description: `${p.tagline} (${p.packSize})`,
     price_gbp: Number.parseFloat(String(p.price).replace(/[^0-9.]/g, "")) || 2,
-    packaging_salience: 3,
+    packaging_salience: p.packagingSalience ?? 3,
+    packaging_description: p.packagingSalience
+      ? `Packaging photo scored ${p.packagingSalience}/5 for shelf standout`
+      : null,
     claims: claimsOf(p),
     stockists: {
       chains: [],
