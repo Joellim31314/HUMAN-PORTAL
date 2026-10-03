@@ -276,7 +276,6 @@ Yes — Postgres runs locally, and the demo setup is deliberately boring:
 
 - Exact subscription pricing/tiers — deliberately undecided until sim value is
   proven on real users.
-- Which candidate F&B signal sources make the v1 cut (menu intelligence,
-  delivery-app data, circulars are the leading candidates).
-- How often shelf/competitor scraping must refresh to stay trustworthy.
 - Multi-region expansion timing after US launch.
+- When to promote v2 candidate sources into the pipeline (delivery-app corpora
+  and Google Maps/Yelp are the leading candidates).
