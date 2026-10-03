@@ -7,6 +7,7 @@ import {
   FlaskConical,
   LogOut,
   Map as MapIcon,
+  RotateCcw,
   Settings,
   Sparkles,
 } from "lucide-react"
@@ -33,6 +34,7 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+import { resetDemoData } from "@/lib/storage"
 
 const navItems = [
   { title: "Research", url: "/research", icon: MapIcon },
@@ -128,6 +130,14 @@ export function AppSidebar() {
                 <DropdownMenuItem className="gap-2">
                   <Sparkles className="size-4" />
                   Upgrade to Pro
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="gap-2"
+                  onSelect={() => resetDemoData()}
+                >
+                  <RotateCcw className="size-4" />
+                  Reset demo data
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="gap-2">

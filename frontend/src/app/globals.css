@@ -128,3 +128,17 @@
     @apply font-sans;
   }
 }
+
+/* Rank number label inside opportunity circles (Leaflet tooltip) */
+.area-rank-label {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  pointer-events: none;
+}
+.area-rank-label::before {
+  display: none;
+}

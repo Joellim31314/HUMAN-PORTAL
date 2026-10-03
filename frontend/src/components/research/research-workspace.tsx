@@ -1,0 +1,185 @@
+"use client"
+
+import { useState } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { Pencil, Search } from "lucide-react"
+
+import { AreaList } from "@/components/research/area-list"
+import { BetStrip } from "@/components/research/bet-strip"
+import { DemoFillButton } from "@/components/demo/demo-fill-button"
+import { EvidenceSidebar } from "@/components/research/evidence-sidebar"
+import { SignalMap } from "@/components/map/signal-map"
+import { Button } from "@/components/ui/button"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
+import { AREAS, getSettlements } from "@/lib/fixtures"
+import { useProduct, useSearchesLeft } from "@/lib/storage"
+import { useIsMobile } from "@/hooks/use-mobile"
+
+export function ResearchWorkspace({
+  productSlug,
+  initialArea,
+}: {
+  productSlug: string
+  initialArea: string | null
+}) {
+  const router = useRouter()
+  const isMobile = useIsMobile()
+  const product = useProduct()
+  const searchesLeft = useSearchesLeft()
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(initialArea)
+  const [listOpen, setListOpen] = useState(false)
+
+  if (!product) {
+    return (
+      <div className="flex flex-1 items-center justify-center p-6">
+        <div className="flex max-w-sm flex-col items-center gap-3 text-center">
+          <h1 className="text-xl font-semibold tracking-tight">
+            No product yet
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Answer a few questions about your product and we&rsquo;ll map its
+            London opportunity.
+          </p>
+          <div className="flex gap-2">
+            <Button asChild>
+              <Link href="/interview">Start the interview</Link>
+            </Button>
+            <DemoFillButton label="Load demo" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const settlements = getSettlements(product)
+  const placementSettlement = settlements.find((s) => s.key === "placement")
+  const selectedArea = AREAS.find((a) => a.slug === selectedSlug) ?? null
+
+  function selectArea(slug: string) {
+    setSelectedSlug(slug)
+    setListOpen(false)
+    router.replace(`/research?product=${productSlug}&area=${slug}`)
+  }
+
+  const list = (
+    <AreaList
+      areas={AREAS}
+      selectedSlug={selectedSlug}
+      placementSlug={placementSettlement?.areaSlug ?? null}
+      onSelect={selectArea}
+    />
+  )
+
+  const evidence = selectedArea ? (
+    <EvidenceSidebar area={selectedArea} product={product} />
+  ) : null
+
+  return (
+    <div className="flex h-full flex-col">
+      <header className="flex items-start justify-between gap-4 px-5 pt-4 pb-3">
+        <div className="space-y-0.5">
+          <h1 className="text-xl font-semibold tracking-tight">
+            {product.name}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {product.category} · £{product.price}
+            {product.packSize ? ` · ${product.packSize}` : ""} —{" "}
+            {AREAS.length} London areas scored
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {searchesLeft} free searches left this month
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {isMobile && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 rounded-lg bg-card shadow-sm"
+              onClick={() => setListOpen(true)}
+            >
+              <Search className="size-4" />
+              Areas
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 rounded-lg bg-card shadow-sm"
+            asChild
+          >
+            <Link href="/interview">
+              <Pencil className="size-4" />
+              Edit answers
+            </Link>
+          </Button>
+        </div>
+      </header>
+
+      <BetStrip settlements={settlements} />
+
+      <div className="flex min-h-0 flex-1">
+        {isMobile ? (
+          <Sheet open={listOpen} onOpenChange={setListOpen}>
+            <SheetContent
+              side="left"
+              className="w-[320px] gap-0 overflow-y-auto p-0 sm:max-w-none"
+            >
+              <SheetHeader className="sr-only">
+                <SheetTitle>Areas</SheetTitle>
+              </SheetHeader>
+              {list}
+            </SheetContent>
+          </Sheet>
+        ) : (
+          <aside className="w-[320px] shrink-0 overflow-y-auto border-r bg-muted/30">
+            {list}
+          </aside>
+        )}
+
+        <main className="relative min-w-0 flex-1">
+          <SignalMap
+            areas={AREAS}
+            selectedSlug={selectedSlug}
+            onSelect={selectArea}
+          />
+        </main>
+
+        {evidence &&
+          (isMobile ? (
+            <Sheet
+              open={!!selectedSlug}
+              onOpenChange={(open) => {
+                if (!open) {
+                  setSelectedSlug(null)
+                  router.replace(`/research?product=${productSlug}`)
+                }
+              }}
+            >
+              <SheetContent
+                side="right"
+                className="w-[380px] gap-0 overflow-hidden p-0 sm:max-w-none"
+              >
+                <SheetHeader className="sr-only">
+                  <SheetTitle>
+                    {selectedArea?.name ?? "Area evidence"}
+                  </SheetTitle>
+                </SheetHeader>
+                {evidence}
+              </SheetContent>
+            </Sheet>
+          ) : (
+            <aside className="w-[380px] shrink-0 overflow-hidden border-l bg-muted/30">
+              {evidence}
+            </aside>
+          ))}
+      </div>
+    </div>
+  )
+}

@@ -1,12 +1,43 @@
 "use client"
 
-import { MapContainer, ScaleControl, TileLayer, ZoomControl } from "react-leaflet"
+import { useEffect } from "react"
+import {
+  Circle,
+  MapContainer,
+  ScaleControl,
+  TileLayer,
+  Tooltip,
+  useMap,
+  ZoomControl,
+} from "react-leaflet"
 import "leaflet/dist/leaflet.css"
 
-export default function LeafletMap() {
+import type { Area } from "@/lib/types"
+
+const AREA_COLOR = "#4f46e5"
+
+function PanTo({ area }: { area: Area | null }) {
+  const map = useMap()
+  useEffect(() => {
+    if (area) map.flyTo(area.center, 13, { duration: 0.8 })
+  }, [area, map])
+  return null
+}
+
+export default function LeafletMap({
+  areas,
+  selectedSlug,
+  onSelect,
+}: {
+  areas: Area[]
+  selectedSlug: string | null
+  onSelect: (slug: string) => void
+}) {
+  const selected = areas.find((a) => a.slug === selectedSlug) ?? null
+
   return (
     <MapContainer
-      center={[51.5054, -0.0901]}
+      center={[51.545, -0.05]}
       zoom={11}
       zoomControl={false}
       scrollWheelZoom
@@ -19,6 +50,33 @@ export default function LeafletMap() {
       />
       <ZoomControl position="topright" />
       <ScaleControl position="bottomleft" imperial />
+      <PanTo area={selected} />
+      {areas.map((area) => {
+        const isSelected = selectedSlug === area.slug
+        return (
+          <Circle
+            key={area.slug}
+            center={area.center}
+            radius={area.radiusM}
+            pathOptions={{
+              color: AREA_COLOR,
+              weight: isSelected ? 3 : 1.5,
+              fillColor: AREA_COLOR,
+              fillOpacity: isSelected ? 0.3 : 0.16,
+            }}
+            eventHandlers={{ click: () => onSelect(area.slug) }}
+          >
+            <Tooltip
+              permanent
+              direction="center"
+              interactive={false}
+              className="area-rank-label"
+            >
+              {area.rank}
+            </Tooltip>
+          </Circle>
+        )
+      })}
     </MapContainer>
   )
 }
