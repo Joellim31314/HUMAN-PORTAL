@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import config, store
-from app.api import population, signals, simulations
+from app.api import areas, population, signals, simulations
 
 
 @asynccontextmanager
@@ -28,6 +28,7 @@ app.add_middleware(CORSMiddleware, allow_origins=config.CORS_ORIGINS,
 app.include_router(population.router)
 app.include_router(simulations.router)
 app.include_router(signals.router)
+app.include_router(areas.router)
 
 
 @app.get("/")

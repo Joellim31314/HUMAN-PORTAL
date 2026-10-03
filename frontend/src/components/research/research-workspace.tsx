@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowRight, Pencil, Search } from "lucide-react"
@@ -18,6 +18,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { AREAS, EXAMPLE_PRODUCT, getSettlements } from "@/lib/fixtures"
+import { scoreAreas } from "@/lib/sim-api"
+import type { LiveAreaScore } from "@/lib/sim-api"
 import { useProduct, useSearchesLeft } from "@/lib/storage"
 import { useIsMobile } from "@/hooks/use-mobile"
 
@@ -36,10 +38,25 @@ export function ResearchWorkspace({
   const searchesLeft = useSearchesLeft()
   const [selectedSlug, setSelectedSlug] = useState<string | null>(initialArea)
   const [listOpen, setListOpen] = useState(false)
+  const [liveScores, setLiveScores] = useState<Record<
+    string,
+    LiveAreaScore
+  > | null>(null)
 
   const settlements = getSettlements(product)
   const placementSettlement = settlements.find((s) => s.key === "placement")
   const selectedArea = AREAS.find((a) => a.slug === selectedSlug) ?? null
+
+  useEffect(() => {
+    let cancelled = false
+    setLiveScores(null)
+    scoreAreas(product).then((scores) => {
+      if (!cancelled && scores) setLiveScores(scores)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [product])
 
   function selectArea(slug: string) {
     setSelectedSlug(slug)
@@ -52,6 +69,7 @@ export function ResearchWorkspace({
       areas={AREAS}
       selectedSlug={selectedSlug}
       placementSlug={placementSettlement?.areaSlug ?? null}
+      liveScores={liveScores}
       onSelect={selectArea}
     />
   )

@@ -92,6 +92,51 @@ export interface LiveExtras {
   report: ApiReport | null
 }
 
+export interface LiveAreaScore {
+  rank: number
+  score: number
+  bought: number
+}
+
+const BOROUGH_AREA: Record<string, string> = {
+  "Waltham Forest": "walthamstow",
+  Southwark: "peckham",
+  Camden: "camden",
+  Newham: "stratford",
+  Hackney: "shoreditch",
+  Lambeth: "clapham",
+  "Kingston upon Thames": "kingston",
+}
+
+/** Rank all 7 areas with the real funnel engine for this product. */
+export async function scoreAreas(
+  product: ProductAnswers
+): Promise<Record<string, LiveAreaScore> | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/areas/score`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(toProductInput(product, "")),
+      signal: AbortSignal.timeout(120_000),
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    const out: Record<string, LiveAreaScore> = {}
+    for (const a of data.areas as {
+      borough: string
+      rank: number
+      score: number
+      bought: number
+    }[]) {
+      const slug = BOROUGH_AREA[a.borough]
+      if (slug) out[slug] = { rank: a.rank, score: a.score, bought: a.bought }
+    }
+    return out
+  } catch {
+    return null
+  }
+}
+
 function textOf(p: ProductAnswers) {
   return `${p.name} ${p.tagline} ${p.packSize}`.toLowerCase()
 }
