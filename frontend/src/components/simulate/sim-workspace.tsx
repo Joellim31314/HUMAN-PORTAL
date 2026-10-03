@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import {
   ArrowLeft,
@@ -22,15 +22,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { AREAS, SIM_RESULTS } from "@/lib/fixtures"
-import type { AgentNarrative, Verdict } from "@/lib/types"
+import { AREAS, EXAMPLE_PRODUCT, SIM_RESULTS } from "@/lib/fixtures"
+import { runLiveSimulation, type LiveExtras } from "@/lib/sim-api"
+import { useProduct } from "@/lib/storage"
+import type { AgentNarrative, SimResult, Verdict } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 const SIM_STEPS = (areaName: string) => [
-  "Waking 4 persona clusters",
-  `Grounding agents in ${areaName} signals`,
-  "Simulating first encounters",
-  "Reading the verdict",
+  "Waking 2,000 census-grounded Londoners",
+  `Stocking shelves in ${areaName}`,
+  "Living out a simulated week",
+  "Interviewing the people who walked past",
+  "Writing the verdict",
 ]
 
 const VERDICT_STYLES: Record<
@@ -84,10 +87,34 @@ export function SimWorkspace({
   productSlug: string | null
   areaSlug: string | null
 }) {
-  const [running, setRunning] = useState(true)
+  const [loaderDone, setLoaderDone] = useState(false)
   const [showAll, setShowAll] = useState(false)
+  const [live, setLive] = useState<{ result: SimResult; extras: LiveExtras } | null>(null)
+  const [failed, setFailed] = useState(false)
+  const [progress, setProgress] = useState("")
+  const stored = useProduct()
+  const onLoaderDone = useCallback(() => setLoaderDone(true), [])
 
   const area = AREAS.find((a) => a.slug === areaSlug) ?? null
+  const product =
+    stored && stored.slug === productSlug ? stored : EXAMPLE_PRODUCT
+
+  useEffect(() => {
+    if (!productSlug || !area) return
+    let cancelled = false
+    runLiveSimulation(product, area.slug, (m) => !cancelled && setProgress(m))
+      .then((r) => !cancelled && setLive(r))
+      .catch((err) => {
+        console.warn("Live simulation unavailable, using demo data", err)
+        if (!cancelled) setFailed(true)
+      })
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productSlug, area?.slug])
+
+  const running = !loaderDone || (!live && !failed)
 
   if (!productSlug || !areaSlug || !area) {
     return (
@@ -111,7 +138,8 @@ export function SimWorkspace({
     )
   }
 
-  const result = SIM_RESULTS[area.slug]
+  const result = live?.result ?? SIM_RESULTS[area.slug]
+  const extras = live?.extras
   const hidden = result.allNarratives.slice(result.heroNarratives.length)
 
   return (
@@ -133,8 +161,20 @@ export function SimWorkspace({
           MISO Simulation — {area.name}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {result.clusters.length} persona clusters, grounded in{" "}
-          {area.signals.length} scraped signals from this area.
+          {extras ? (
+            <>
+              2,000 census-grounded Londoners lived a simulated week with{" "}
+              {product.name} on {extras.storesStocking} shelves in{" "}
+              {extras.borough}. {extras.passersBy} walked past it;{" "}
+              {extras.funnel.noticed} noticed it; {extras.funnel.bought} bought.
+            </>
+          ) : (
+            <>
+              {result.clusters.length} persona clusters, grounded in{" "}
+              {area.signals.length} scraped signals from this area.
+              {failed && " (Offline demo data — simulation backend unreachable.)"}
+            </>
+          )}
         </p>
 
         <div className="mt-6 rounded-xl border bg-card p-4 shadow-xs">
@@ -169,7 +209,9 @@ export function SimWorkspace({
               {result.overall.ignore}% ignore
             </span>
             <span className="ml-auto text-muted-foreground">
-              Modelled first-encounter outcome · deterministic demo
+              {extras
+                ? "Share of people who passed a stockist · seeded simulation"
+                : "Modelled first-encounter outcome · deterministic demo"}
             </span>
           </div>
         </div>
@@ -283,6 +325,27 @@ export function SimWorkspace({
           </p>
         </div>
 
+        {extras?.report && extras.report.action_items.length > 0 && (
+          <div className="mt-6 rounded-xl border bg-card p-4 shadow-xs">
+            <p className="text-sm font-semibold">Action list</p>
+            <ul className="mt-2 flex flex-col gap-3">
+              {extras.report.action_items.map((a) => (
+                <li key={a.action} className="text-sm">
+                  <div className="flex items-start gap-2">
+                    <Badge variant="outline" className="shrink-0 text-[10px] capitalize">
+                      {a.priority}
+                    </Badge>
+                    <span className="font-medium">{a.action}</span>
+                  </div>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    {a.rationale}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="mt-6">
           <BacktestCard />
         </div>
@@ -301,10 +364,18 @@ export function SimWorkspace({
       </div>
 
       {running && (
-        <StagedLoader
-          steps={SIM_STEPS(area.name)}
-          onDone={() => setRunning(false)}
-        />
+        <>
+          <StagedLoader
+            steps={SIM_STEPS(area.name)}
+            onDone={onLoaderDone}
+            stepMs={2500}
+          />
+          {loaderDone && (
+            <p className="fixed inset-x-0 bottom-16 z-50 text-center text-xs text-muted-foreground">
+              {progress || "Finishing up"}…
+            </p>
+          )}
+        </>
       )}
     </div>
   )
