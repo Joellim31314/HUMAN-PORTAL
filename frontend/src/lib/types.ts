@@ -1,4 +1,4 @@
-export type Platform = "TikTok" | "Reddit" | "YouTube" | "X" | "Reviews"
+export type Platform = "TikTok" | "Reddit" | "YouTube" | "X" | "Reviews" | "StackExchange"
 
 export type Sentiment = "positive" | "negative" | "mixed"
 

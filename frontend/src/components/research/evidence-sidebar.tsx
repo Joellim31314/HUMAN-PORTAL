@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { ArrowRight, Building2, Users } from "lucide-react"
 import { useRouter } from "next/navigation"
 
@@ -7,6 +8,7 @@ import { ScoreBreakdown } from "@/components/research/score-bars"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
+import { fetchLiveSignals } from "@/lib/signals-api"
 import type { Area, Platform, ProductAnswers, Signal } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
@@ -16,6 +18,7 @@ const PLATFORM_STYLES: Record<Platform, string> = {
   YouTube: "bg-red-600 text-white",
   X: "bg-sky-600 text-white",
   Reviews: "bg-emerald-600 text-white",
+  StackExchange: "bg-[#1e5397] text-white",
 }
 
 const SENTIMENT_DOT: Record<Signal["sentiment"], string> = {
@@ -72,6 +75,34 @@ export function EvidenceSidebar({
   product: ProductAnswers
 }) {
   const router = useRouter()
+  const [liveSignals, setLiveSignals] = useState<Signal[] | null>(null)
+  const [liveStatus, setLiveStatus] = useState<"loading" | "live" | "cached">(
+    "loading"
+  )
+
+  useEffect(() => {
+    let cancelled = false
+    setLiveStatus("loading")
+    setLiveSignals(null)
+    fetchLiveSignals(product.name, area.name)
+      .then((result) => {
+        if (cancelled) return
+        if (result.signals.length > 0) {
+          setLiveSignals(result.signals)
+          setLiveStatus("live")
+        } else {
+          setLiveStatus("cached")
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLiveStatus("cached")
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [area.slug, area.name, product.name])
+
+  const displaySignals = liveSignals ?? area.signals
 
   return (
     <div className="flex h-full flex-col">
@@ -100,11 +131,28 @@ export function EvidenceSidebar({
         </section>
 
         <section>
-          <h3 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            Human signals ({area.signals.length})
-          </h3>
+          <div className="mb-2 flex items-center gap-2">
+            <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              Human signals ({displaySignals.length})
+            </h3>
+            {liveStatus === "live" && (
+              <Badge className="bg-emerald-100 text-[10px] text-emerald-800 hover:bg-emerald-100">
+                Live · pulled now
+              </Badge>
+            )}
+            {liveStatus === "loading" && (
+              <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                Pulling…
+              </Badge>
+            )}
+            {liveStatus === "cached" && (
+              <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                Cached demo data
+              </Badge>
+            )}
+          </div>
           <div className="flex flex-col gap-2">
-            {area.signals.map((signal) => (
+            {displaySignals.map((signal) => (
               <SignalRow key={signal.id} signal={signal} />
             ))}
           </div>
@@ -158,7 +206,9 @@ export function EvidenceSidebar({
 
         <Separator />
         <p className="text-xs text-muted-foreground">
-          Data updated 03/10/2026 · Fixture dataset for demo
+          {liveStatus === "live"
+            ? "Signals pulled live from open APIs · sentiment & topics via DeepSeek"
+            : "Data updated 03/10/2026 · Fixture dataset for demo"}
         </p>
       </div>
 
