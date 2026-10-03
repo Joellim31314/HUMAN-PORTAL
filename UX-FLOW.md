@@ -7,18 +7,14 @@ branch, no role picker. Geography is **London** for the demo.
 
 ---
 
-## Act 0 — Landing (trend feed teaser)
+## Act 0 — Landing (the map, immediately)
 
-First-time visitors see the data engine working before we ask for anything:
-
-- **Live trend feed**: rising/falling F&B trends with velocity ("hojicha is
-  becoming dominant") and human signal cards (age, gender, job, sentiment).
-- Two entries:
-  - **"Test your product"** → Act 1 interview.
-  - **"Try an example: hojicha RTD"** → interview pre-filled; judges see a
-    complete flow in one click.
-
-No signup wall in the demo.
+First-time visitors land on the Research map — no interview wall. With no
+saved product, the map runs the hojicha example dataset (badged "Demo
+dataset") so the engine is visibly working: circles, ranked areas, evidence.
+The interview is one click away via **"Test your product"**; a **"Demo data"**
+button pre-fills it with the hojicha RTD example. Once a product is
+submitted, `/` shows that product's map instead.
 
 ## Act 1 — Upfront interview (~6–8 questions, 60–90s)
 
@@ -100,7 +96,7 @@ The artifact judges screenshot:
 
 ## Judge journey (~5 minutes)
 
-1. Land → trend feed proves the engine (30s)
+1. Land → map with example dataset proves the engine (30s)
 2. One-click example product → interview is pre-filled, bets visible (30s)
 3. Research → circles appear; the placement bet gets settled inline (90s)
 4. Click top area → "Simulate here" → MISO verdict with narratives (90s)

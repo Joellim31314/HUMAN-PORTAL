@@ -3,13 +3,13 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Pencil, Search } from "lucide-react"
+import { ArrowRight, Pencil, Search } from "lucide-react"
 
 import { AreaList } from "@/components/research/area-list"
 import { BetStrip } from "@/components/research/bet-strip"
-import { DemoFillButton } from "@/components/demo/demo-fill-button"
 import { EvidenceSidebar } from "@/components/research/evidence-sidebar"
 import { SignalMap } from "@/components/map/signal-map"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -17,7 +17,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import { AREAS, getSettlements } from "@/lib/fixtures"
+import { AREAS, EXAMPLE_PRODUCT, getSettlements } from "@/lib/fixtures"
 import { useProduct, useSearchesLeft } from "@/lib/storage"
 import { useIsMobile } from "@/hooks/use-mobile"
 
@@ -30,32 +30,12 @@ export function ResearchWorkspace({
 }) {
   const router = useRouter()
   const isMobile = useIsMobile()
-  const product = useProduct()
+  const saved = useProduct()
+  const isExample = !saved
+  const product = saved ?? EXAMPLE_PRODUCT
   const searchesLeft = useSearchesLeft()
   const [selectedSlug, setSelectedSlug] = useState<string | null>(initialArea)
   const [listOpen, setListOpen] = useState(false)
-
-  if (!product) {
-    return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="flex max-w-sm flex-col items-center gap-3 text-center">
-          <h1 className="text-xl font-semibold tracking-tight">
-            No product yet
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Answer a few questions about your product and we&rsquo;ll map its
-            London opportunity.
-          </p>
-          <div className="flex gap-2">
-            <Button asChild>
-              <Link href="/interview">Start the interview</Link>
-            </Button>
-            <DemoFillButton label="Load demo" />
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   const settlements = getSettlements(product)
   const placementSettlement = settlements.find((s) => s.key === "placement")
@@ -64,7 +44,7 @@ export function ResearchWorkspace({
   function selectArea(slug: string) {
     setSelectedSlug(slug)
     setListOpen(false)
-    router.replace(`/research?product=${productSlug}&area=${slug}`)
+    router.replace(`/research?product=${product.slug}&area=${slug}`)
   }
 
   const list = (
@@ -84,8 +64,13 @@ export function ResearchWorkspace({
     <div className="flex h-full flex-col">
       <header className="flex items-start justify-between gap-4 px-5 pt-4 pb-3">
         <div className="space-y-0.5">
-          <h1 className="text-xl font-semibold tracking-tight">
+          <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
             {product.name}
+            {isExample && (
+              <Badge variant="secondary" className="text-xs font-medium">
+                Demo dataset
+              </Badge>
+            )}
           </h1>
           <p className="text-sm text-muted-foreground">
             {product.category} · £{product.price}
@@ -108,17 +93,26 @@ export function ResearchWorkspace({
               Areas
             </Button>
           )}
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2 rounded-lg bg-card shadow-sm"
-            asChild
-          >
-            <Link href="/interview">
-              <Pencil className="size-4" />
-              Edit answers
-            </Link>
-          </Button>
+          {isExample ? (
+            <Button size="sm" className="gap-2 rounded-lg" asChild>
+              <Link href="/interview">
+                Test your product
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 rounded-lg bg-card shadow-sm"
+              asChild
+            >
+              <Link href="/interview">
+                <Pencil className="size-4" />
+                Edit answers
+              </Link>
+            </Button>
+          )}
         </div>
       </header>
 
@@ -158,7 +152,7 @@ export function ResearchWorkspace({
               onOpenChange={(open) => {
                 if (!open) {
                   setSelectedSlug(null)
-                  router.replace(`/research?product=${productSlug}`)
+                  router.replace(`/research?product=${product.slug}`)
                 }
               }}
             >
