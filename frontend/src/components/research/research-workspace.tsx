@@ -43,7 +43,7 @@ export function ResearchWorkspace({
     LiveAreaScore
   > | null>(null)
 
-  const settlements = getSettlements(product)
+  const settlements = getSettlements(product, liveScores)
   const placementSettlement = settlements.find((s) => s.key === "placement")
   const selectedArea = AREAS.find((a) => a.slug === selectedSlug) ?? null
 

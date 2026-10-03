@@ -14,8 +14,8 @@ import { cn } from "@/lib/utils"
 export const DEMO_FILL_EVENT = "hp-fill-demo"
 
 /**
- * Small, placeable button that pre-fills the interview with the hojicha RTD
- * example. Dispatches an event when the interview is already mounted, or sets
+ * Small, placeable button that pre-fills the interview with the Well &
+ * Truly Cheese & Jalapeño Thins example. Dispatches an event when the interview is already mounted, or sets
  * a one-shot flag and navigates there otherwise.
  */
 export function DemoFillButton({
@@ -48,7 +48,7 @@ export function DemoFillButton({
         </Button>
       </TooltipTrigger>
       <TooltipContent>
-        Pre-fill the interview with the hojicha RTD example
+        Pre-fill the interview with the Well &amp; Truly example
       </TooltipContent>
     </Tooltip>
   )

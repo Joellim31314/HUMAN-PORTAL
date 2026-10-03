@@ -10,11 +10,12 @@ branch, no role picker. Geography is **London** for the demo.
 ## Act 0 — Landing (the map, immediately)
 
 First-time visitors land on the Research map — no interview wall. With no
-saved product, the map runs the hojicha example dataset (badged "Demo
-dataset") so the engine is visibly working: circles, ranked areas, evidence.
-The interview is one click away via **"Test your product"**; a **"Demo data"**
-button pre-fills it with the hojicha RTD example. Once a product is
-submitted, `/` shows that product's map instead.
+saved product, the map runs the Well & Truly Cheese & Jalapeño Thins example
+dataset (badged "Demo dataset") so the engine is visibly working: circles,
+ranked areas, evidence. The interview is one click away via **"Test your
+product"**; a **"Demo data"** button pre-fills it with the real Well &
+Truly product (packaging photo included). Once a product is submitted, `/`
+shows that product's map instead.
 
 ## Act 1 — Upfront interview (~6–8 questions, 60–90s)
 
@@ -81,7 +82,7 @@ The artifact judges screenshot:
 | --- | --- |
 | Geography | London (map centers on London) |
 | Free searches | First research costs 1 of 35; counter visible but **never blocks** |
-| Example product | One-click hojicha RTD pre-fill |
+| Example product | One-click Well & Truly Cheese & Jalapeño Thins pre-fill (packaging photo + shelf-standout score) |
 | Assistant FAB | **Removed** from the map |
 | Back-test evidence | One canned historical launch: simulated with pre-launch data only, shown vs. its known fate |
 | Payments | None — Pro/paywall surfaces are stubs |
@@ -97,7 +98,7 @@ The artifact judges screenshot:
 ## Judge journey (~5 minutes)
 
 1. Land → map with example dataset proves the engine (30s)
-2. One-click example product → interview is pre-filled, bets visible (30s)
+2. One-click example product → interview is pre-filled with Well & Truly, bets visible (30s)
 3. Research → circles appear; the placement bet gets settled inline (90s)
 4. Click top area → "Simulate here" → MISO verdict with narratives (90s)
 5. Brief → recommendation + citations + the canned back-test slide (60s)

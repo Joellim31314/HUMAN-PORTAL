@@ -6,6 +6,7 @@ import type {
   ProductAnswers,
   SimResult,
 } from "@/lib/types"
+import type { LiveAreaScore } from "@/lib/sim-api"
 
 export const LONDON_AREAS = [
   "Walthamstow",
@@ -18,18 +19,21 @@ export const LONDON_AREAS = [
 ] as const
 
 export const EXAMPLE_PRODUCT: ProductAnswers = {
-  slug: "hojicha-bloom",
-  name: "Hojicha Bloom",
-  tagline: "Ready-to-drink roasted green tea — calm energy, no coffee jitters",
-  category: "Beverages",
-  price: "3.50",
-  packSize: "330ml can",
-  status: "prelaunch",
-  channels: ["Cafés", "D2C online"],
+  slug: "well-and-truly-thins",
+  name: "Well & Truly Cheese & Jalapeño Thins",
+  tagline:
+    "Oven-baked cheese thins with 45% real Cheddar & Gouda — protein-packed, gluten free, big cheese with a gentle jalapeño kick",
+  category: "Snacks & confectionery",
+  price: "2.80",
+  packSize: "100g",
+  status: "selling",
+  channels: ["Supermarket", "D2C online", "Food halls"],
+  image: "/demo-packaging.jpg",
+  packagingSalience: 4,
   buyerGuess:
-    "Health-conscious millennial professionals looking for a coffee alternative",
+    "Gluten-free shoppers and better-for-you snackers who still want something indulgent",
   choiceReason:
-    "They choose it for calmer caffeine and antioxidants, without coffee bitterness",
+    "They choose it for 45% real cheese, baked-not-fried creds and the protein hit — a 'naughty-ish' snack that feels permissible",
   rejectReason: "",
   placementGuess: "shoreditch",
 }
@@ -633,21 +637,41 @@ export const SIM_RESULTS: Record<string, SimResult> = Object.fromEntries(
   })
 )
 
-export function getSettlements(product: ProductAnswers): BetSettlement[] {
+export function getSettlements(
+  product: ProductAnswers,
+  liveScores?: Record<string, LiveAreaScore> | null
+): BetSettlement[] {
   const placementArea = AREAS.find((a) => a.slug === product.placementGuess)
-  const top = AREAS[0]
+
+  let placementStatus: BetSettlement["status"]
+  let placementSay: string
+  const liveTop = liveScores
+    ? Object.entries(liveScores).sort((a, b) => a[1].rank - b[1].rank)[0]
+    : null
+  if (liveTop) {
+    const [liveTopSlug, liveTopScore] = liveTop
+    const liveTopArea = AREAS.find((a) => a.slug === liveTopSlug)
+    placementStatus =
+      product.placementGuess === liveTopSlug ? "confirmed" : "contradicted"
+    placementSay = `Live simulation of 2,000 locals puts ${
+      liveTopArea?.name ?? liveTopSlug
+    } first for this product (${liveTopScore.bought} expected buyers per 2,000 passers-by).`
+  } else {
+    const top = AREAS[0]
+    placementStatus =
+      product.placementGuess === top.slug ? "confirmed" : "contradicted"
+    placementSay = `Cached intel says ${top.name} — it scores ${
+      top.score.total - (placementArea?.score.total ?? 0)
+    } points higher, with stronger shelf whitespace and fresher trend heat.`
+  }
+
   return [
     {
       key: "placement",
       label: "Placement",
       userSaid: placementArea?.name ?? product.placementGuess,
-      signalsSay: `Signals say ${top.name} — it scores ${
-        top.score.total - (placementArea?.score.total ?? 0)
-      } points higher, with stronger shelf whitespace and fresher trend heat.`,
-      status:
-        product.placementGuess === top.slug
-          ? ("confirmed" as const)
-          : ("contradicted" as const),
+      signalsSay: placementSay,
+      status: placementStatus,
       areaSlug: placementArea?.slug,
     },
     {
@@ -655,15 +679,15 @@ export function getSettlements(product: ProductAnswers): BetSettlement[] {
       label: "Buyer",
       userSaid: product.buyerGuess,
       signalsSay:
-        "The loudest signals come from 19–34 matcha-switchers and creative workers. 'Wellness millennial professionals' exist in the data — but they're the quiet third, not the engine.",
-      status: "contradicted" as const,
+        "The pulled signals are driven by a broader mix than your guess — open an area's live signals to see who is actually posting.",
+      status: "partial" as const,
     },
     {
       key: "choice",
       label: "Why they choose it",
       userSaid: product.choiceReason,
       signalsSay:
-        "Confirmed almost word-for-word: 'calm energy', 'no jitters', 'coffee alternative' are the exact phrases repeating across TikTok and Reddit.",
+        "Your stated reason is echoed across the pulled signals for this product — the same phrases repeat in real posts.",
       status: "confirmed" as const,
     },
   ]

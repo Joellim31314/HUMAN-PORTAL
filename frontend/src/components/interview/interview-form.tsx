@@ -102,6 +102,8 @@ export function InterviewForm() {
   function slugify(name: string) {
     return (
       name
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "") || "product"
@@ -148,7 +150,7 @@ export function InterviewForm() {
             <Label htmlFor="name">Product name</Label>
             <Input
               id="name"
-              placeholder="e.g. Hojicha Bloom"
+              placeholder="e.g. Well & Truly Thins"
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
             />
