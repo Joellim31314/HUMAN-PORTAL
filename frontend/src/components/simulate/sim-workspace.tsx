@@ -38,19 +38,19 @@ const VERDICT_STYLES: Record<
   { badge: string; label: string; dot: string }
 > = {
   adopt: {
-    badge: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
+    badge: "bg-success/10 text-success hover:bg-success/10",
     label: "Adopts",
-    dot: "bg-emerald-500",
+    dot: "bg-success",
   },
   reject: {
-    badge: "bg-rose-100 text-rose-800 hover:bg-rose-100",
+    badge: "bg-danger/10 text-danger hover:bg-danger/10",
     label: "Rejects",
-    dot: "bg-rose-500",
+    dot: "bg-danger",
   },
   ignore: {
-    badge: "bg-slate-100 text-slate-700 hover:bg-slate-100",
+    badge: "bg-muted text-muted-foreground hover:bg-muted",
     label: "Ignores",
-    dot: "bg-slate-400",
+    dot: "bg-muted-foreground/30",
   },
 }
 
@@ -140,32 +140,32 @@ export function SimWorkspace({
         <div className="mt-6 rounded-xl border bg-card p-4 shadow-xs">
           <div className="flex h-3 w-full overflow-hidden rounded-full">
             <div
-              className="bg-emerald-500"
+              className="bg-success"
               style={{ width: `${result.overall.adopt}%` }}
             />
             <div
-              className="bg-rose-400"
+              className="bg-danger/70"
               style={{ width: `${result.overall.reject}%` }}
             />
             <div
-              className="bg-slate-300"
+              className="bg-muted"
               style={{ width: `${result.overall.ignore}%` }}
             />
           </div>
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
             <span>
-              <span className="font-semibold text-emerald-600">
+              <span className="font-semibold text-success">
                 {result.overall.adopt}% adopt
               </span>{" "}
               ·
             </span>
             <span>
-              <span className="font-semibold text-rose-500">
+              <span className="font-semibold text-danger">
                 {result.overall.reject}% reject
               </span>{" "}
               ·
             </span>
-            <span className="font-semibold text-slate-500">
+            <span className="font-semibold text-muted-foreground">
               {result.overall.ignore}% ignore
             </span>
             <span className="ml-auto text-muted-foreground">

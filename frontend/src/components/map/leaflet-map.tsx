@@ -14,7 +14,7 @@ import "leaflet/dist/leaflet.css"
 
 import type { Area } from "@/lib/types"
 
-const AREA_COLOR = "#4f46e5"
+const AREA_COLOR = "#3D74F6"
 
 function PanTo({ area }: { area: Area | null }) {
   const map = useMap()
