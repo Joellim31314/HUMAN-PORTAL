@@ -7,6 +7,8 @@ understands how people choose, trust, or reject products — and turns that unde
 into something a brand or retailer can act on. It helps them make a better decision,
 or spots a decision they should be making but aren't.
 
+Hackathon demo UX (the flow we build first): see **UX-FLOW.md**.
+
 ---
 
 ## The two problems we sell solutions to

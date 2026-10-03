@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { MessageCircle, SlidersHorizontal } from "lucide-react"
+import { SlidersHorizontal } from "lucide-react"
 
 import { SearchPanel } from "@/components/map/search-panel"
 import { SignalMap } from "@/components/map/signal-map"
@@ -65,13 +65,6 @@ export function MapWorkspace() {
         ) : null}
         <main className="relative min-w-0 flex-1">
           <SignalMap />
-          <Button
-            size="icon"
-            aria-label="Open assistant"
-            className="absolute right-5 bottom-5 z-[1001] size-11 rounded-full shadow-lg"
-          >
-            <MessageCircle className="size-5" />
-          </Button>
         </main>
       </div>
     </div>

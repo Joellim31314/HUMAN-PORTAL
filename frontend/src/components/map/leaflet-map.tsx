@@ -6,8 +6,8 @@ import "leaflet/dist/leaflet.css"
 export default function LeafletMap() {
   return (
     <MapContainer
-      center={[39.8283, -98.5795]}
-      zoom={4}
+      center={[51.5054, -0.0901]}
+      zoom={11}
       zoomControl={false}
       scrollWheelZoom
       className="h-full w-full"
