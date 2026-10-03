@@ -31,7 +31,9 @@ decision-makers at brands and retailers.
 simulation engine are all tuned to F&B. The data model should not paint us into a
 corner, but F&B is the wedge.
 
-**Launch market: US first.**
+**Launch market: UK first.** England for v1 statistics — ONS covers England &
+Wales; Scottish (NRS) and Northern Irish (NISRA) agency stitching is deferred.
+London-weighted data collection is acceptable for v1.
 
 ---
 
@@ -110,53 +112,59 @@ where, and would anyone actually pick me?*
 
 ### Confirmed for v1
 
-Sourcing decisions locked 2026-10 (see *Ingestion policy* below).
+UK-targeted. Platform access paths marked ✅ were verified live 2026-10 and are
+region-agnostic (now pointed at GB); UK-specific sources are pending a UK
+verification round — scheduled next.
 
 **Social & planning signals**
 
 | Source | Access | What it gives us |
 | --- | --- | --- |
-| TikTok | [TikTok-Api](https://github.com/davidteather/TikTok-Api), adapter-wrapped | Trends, sounds, comments, engagement — the fastest F&B signal stream |
-| Reddit | Official API, curated subreddit list (~40–60 food subs) | Threads & comments: honest enthusiasm and rejection language |
-| YouTube | Official API | Comments, review/trend video reactions |
-| X / Twitter | API/scrape | Trend chatter, launch reactions |
-| Instagram | Scrape | Reels, comments, hashtag momentum |
-| Pinterest | Trends page + Pinterest Predicts report | Planning-intent signals ("mini desserts up 529%") |
+| TikTok ⚠️ | ✅ Verified: commercial API (~$50–150/mo) *or* self-hosted Playwright interceptor. Target UK via UK hashtags/sounds; no region field — infer from bio/language. TikTok-Api lib returns empty | Trends, sounds, comments, engagement — the fastest F&B signal stream |
+| Reddit | ✅ Verified: official OAuth API (100 QPM) + Arctic Shift 90-day backfill. UK subreddit list (~40–60: r/CasualUK, r/AskUK, r/ukfood, r/britishproblems, r/aldi_uk, …). 48h deleted-content purge | Threads & comments: honest enthusiasm and rejection language |
+| YouTube | ✅ Verified: official Data API v3 (search has its own ~100-call/day bucket; ~3k videos/day comment harvest). relevanceLanguage=en; GB channel seeds | Comments, review/trend video reactions |
+| X / Twitter ⚠️ | ✅ Verified: pay-per-usage API only (~$5–35/mo for recent search). No free tier; Nitter dead; syndication endpoint hydrates known tweet IDs free | Trend chatter, launch reactions |
+| Instagram ⚠️ | ✅ Verified: no clean path — best-effort logged-in instaloader (ToS risk, account may die) or approval-gated Graph API (30 hashtags/week cap) | Reels, comments, hashtag momentum |
+| Pinterest | ✅ Verified: Predicts pages embed full trend JSON; en-gb pages carry UK-localized stats | Planning-intent signals |
 
 **Commerce, reviews & shelf**
 
 | Source | Access | What it gives us |
 | --- | --- | --- |
-| Walmart reviews | Direct page scraping (first SKU-attached corpus) | Trust/rejection language attached to actual SKUs |
-| Kroger product & price API | Official developer API | Shelf/pricing ground truth, price by ZIP |
-| Flipp | Aggregated circulars | Pricing/promotion landscape across US chains |
-| Google Trends | pytrends | Search-interest baselines to validate social spikes |
+| Ocado reviews + assortment | Direct page scraping — first UK SKU-attached corpus (grocery-pure, skews older/affluent). **Pending UK verification** | Trust/rejection language attached to actual SKUs + what's shelved |
+| trolley.co.uk | Aggregated prices/promos across Big 4 + discounters in one scrape. **Pending UK verification** | Weekly pricing/promotion landscape |
+| Google Trends | ✅ Verified: pytrends with `urllib3<2` pin, geo='GB' | Search-interest baselines to validate social spikes |
+
+No official grocery API exists in the UK (the Kroger model has no equivalent) —
+aggregator-first for prices, direct scrape for assortment/reviews.
 
 **Grounding, context & events**
 
 | Source | Access | What it gives us |
 | --- | --- | --- |
-| Census ACS / BLS / USDA ERS / CDC NHANES | Official APIs & CSVs | Persona grounding: demographics, food spend, food access, real dietary intake by region |
-| FDA + USDA FSIS recall feeds | RSS/API | Recall waves as trust signals; agents react |
-| Seasonality | NOAA weather + holiday/event calendar | Simulated people react to seasons (grilling, pumpkin spice, January diets) |
-| Food-media event feeds | Scrape: Food Dive, Food Navigator-USA, BevNET | Structured launch/failure events the sim reacts to |
+| ONS Census 2021 (Nomis API) | Official, free. England & Wales; Scotland via NRS; NI deferred. **Pending UK verification** | Persona grounding: demographics by local authority |
+| ONS Family Food survey / NDNS / Index of Multiple Deprivation | Official published tables — household food spend, real dietary intake, deprivation. **Pending UK verification** | Food spend, diet behavior, price-sensitivity segments |
+| FSA Food Alerts | Food Standards Agency API + RSS — allergy alerts, recalls, "do not eat" warnings. **Pending UK verification** | Recall waves as trust signals; agents react |
+| Seasonality | Open-Meteo (no key) + full UK cultural calendar — Christmas, Easter, Bonfire Night, Pancake Day, Ramadan/Eid, Diwali, Lunar New Year | Simulated people react to seasons and cultural moments |
+| UK food media | Grocery Gazette, FoodBev Media, Talking Retail (free); The Grocer optional (paywalled) — **pending UK verification** | Structured launch/failure events the sim reacts to |
 | User-uploaded surveys | CSV importer (v1: survey exports only) | First-party declared demographics & stated preferences |
 
-### Ingestion policy (locked 2026-10)
+### Ingestion policy (locked 2026-10, UK pivot)
 
-- **Languages:** English + Spanish at ingest. US is the second-largest
-  Spanish-speaking country; ignoring it is a known blind spot we're choosing
-  to close early.
-- **Geography:** every signal carries ZIP + county where derivable; personas
-  cluster at county level.
+- **Language:** English only at ingest. Revisit UK community languages
+  (Polish, Urdu, Punjabi, Bengali, Arabic) in v2 if clustering shows a gap.
+- **Geography:** every signal carries postcode + local authority where
+  derivable; personas cluster at local-authority level.
 - **Backfill:** 90 days of history on each adapter's first run — enough for
   trend velocity, bounded crawl cost.
 - **Storage:** raw payload (JSONB) + normalized human-signal record. Raw is
-  re-processable when the schema evolves.
+  re-processable when the schema evolves. Reddit-sourced content must be
+  purged within 48h when the author deletes it (Reddit terms).
 - **Author identity:** public handles stored as-is. Provenance — showing the
   real person behind a signal — is core to the product; review if legal asks.
 - **Shelf refresh:** weekly prices / monthly full assortment. Demo-mode shelf
-  coverage: Walmart, Kroger, Target (top 3).
+  coverage: Big 4 + discounters (Tesco, Sainsbury's, Asda, Morrisons, Aldi,
+  Lidl) via trolley.co.uk + Ocado.
 - **Trend verification:** a trend claim earns "verified" only when corroborated
   by ≥2 independent source families (e.g. TikTok + Reddit, or social +
   search). Enforced in the trend feed, not just by convention.
@@ -164,27 +172,44 @@ Sourcing decisions locked 2026-10 (see *Ingestion policy* below).
   Spate, Tastewise, Datassential) may be consulted as validation ground truth
   but are not data feeds.
 
+### Source verification (status)
+
+- **Verified 2026-10, region-agnostic (now targeting GB):** Reddit (OAuth,
+  100 QPM, + Arctic Shift backfill), YouTube (official API), Pinterest
+  (Predicts embedded JSON), Google Trends (pytrends, `urllib3<2` pin), TikTok
+  (commercial API or Playwright interception; both confirmed working), X
+  (pay-per-usage only — budget decision), Instagram (no clean path —
+  best-effort only).
+- **Pending UK verification round:** trolley.co.uk scraping, Ocado
+  review/assortment scraping, FSA Food Alerts API, ONS Nomis, ONS Family Food
+  / NDNS / IMD tables, Open-Meteo, UK food-media feeds, UK subreddit list
+  sanity-check.
+- **US expansion:** US sources were verified working on 2026-10-03 but detail
+  is stripped from this doc per decision; US launch requires re-verification
+  at that time.
+
 ### Candidates for v2+
 
 Deferred sources, roughly in priority order:
 
 - **Menu intelligence** — Datassential/Spate/Mintel as validation ground truth.
-- **Delivery & grocery apps** — Instacart/DoorDash/UberEats review corpora and
-  availability by ZIP.
-- **Recipes & cooking sites** — Allrecipes, Tasty comments; leading indicator
-  for packaged F&B.
-- **Google Maps / Yelp reviews** — regional taste maps and complaint language.
+- **Delivery & grocery apps** — Deliveroo/Just Eat/UberEats review corpora and
+  availability by postcode.
+- **Recipes & cooking sites** — BBC Good Food, Allrecipes UK comments; leading
+  indicator for packaged F&B.
+- **Google Maps reviews** — regional taste maps and complaint language.
 - **Beverage verticals** — Untappd, Vivino: review-heavy beer/wine communities.
 - **DTC review platforms** — Yotpo/Bazaarvoice endpoints: one integration,
   hundreds of DTC F&B brands.
-- **Local chatter** — Facebook Groups, Nextdoor: hyperlocal taste signal.
+- **Local chatter** — Facebook Groups, Nextdoor UK: hyperlocal taste signal.
 - **Menu/LTO tracker** — chain menu-page scraping for limited-time-offer
-  launches; trade-show exhibitor lists (Expo West, Sweets & Snacks).
-- **Forecast reports** — McCormick Flavor Forecast, Whole Foods Trends Council,
-  NRA "What's Hot" as sanity checks.
-- **Food podcasts** — Sporkful, Taste Radio transcripts (needs summarization
-  pipeline).
-- **Job postings** — new-store openings, ghost kitchens, CPG expansion signals.
+  launches; trade-show exhibitor lists (Lunch!, Speciality & Fine Food Fair,
+  Farm Shop & Deli Show).
+- **Forecast reports** — Waitrose Food & Drink Report, Sainsbury's Future of
+  Food, Mintel UK as sanity checks.
+- **Food podcasts** — BBC The Food Programme, Off Menu transcripts (needs
+  summarization pipeline).
+- **Job postings** — new-store openings, dark kitchens, CPG expansion signals.
 
 > **Note on TikTok-Api:** it is an unofficial library and breaks often as TikTok
 > changes. Treat it as one signal among several, never the sole basis for a trend
@@ -276,6 +301,7 @@ Yes — Postgres runs locally, and the demo setup is deliberately boring:
 
 - Exact subscription pricing/tiers — deliberately undecided until sim value is
   proven on real users.
-- Multi-region expansion timing after US launch.
+- Multi-region expansion timing after UK launch (Scotland/Wales/NI statistical
+  coverage first, then US — US sources require re-verification).
 - When to promote v2 candidate sources into the pipeline (delivery-app corpora
-  and Google Maps/Yelp are the leading candidates).
+  and Google Maps reviews are the leading candidates).
