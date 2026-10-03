@@ -6,4 +6,6 @@ pandas
 httpx
 openai
 python-dotenv
+sqlalchemy>=2
+psycopg[binary]
 pytest

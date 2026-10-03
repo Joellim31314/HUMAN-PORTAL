@@ -29,4 +29,15 @@ INTERVIEW_COUNT = int(os.getenv("INTERVIEW_COUNT", "80"))
 # Engine
 WALK_RADIUS_M = float(os.getenv("WALK_RADIUS_M", "400"))
 
+# Signal store (Postgres via docker compose up -d db; SQLite works for tests)
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+psycopg://humanportal:humanportal@localhost:5432/humanportal",
+)
+
+# Reddit ingestion (reddit.com/prefs/apps -> script app)
+REDDIT_CLIENT_ID = os.getenv("REDDIT_CLIENT_ID", "")
+REDDIT_CLIENT_SECRET = os.getenv("REDDIT_CLIENT_SECRET", "")
+REDDIT_USER_AGENT = os.getenv("REDDIT_USER_AGENT", "humanportal-ingestion/0.1")
+
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*").split(",")
