@@ -21,3 +21,11 @@ logs/
 
 # Playwright MCP artifacts (browser snapshots, console logs)
 .playwright-mcp/
+
+# Backend
+.venv/
+__pycache__/
+.pytest_cache/
+backend/data/raw/
+backend/data/simulations/
+backend/.pytest-api-tmp*/
