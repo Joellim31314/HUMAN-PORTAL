@@ -110,35 +110,81 @@ where, and would anyone actually pick me?*
 
 ### Confirmed for v1
 
-| Source | What it gives us |
-| --- | --- |
-| TikTok (via [TikTok-Api](https://github.com/davidteather/TikTok-Api)) | Trends, sounds, comments, engagement — the fastest F&B signal stream |
-| Reddit | Threads & comments: honest enthusiasm and rejection language |
-| YouTube | Comments, review/trend video reactions |
-| X / Twitter | Trend chatter, launch reactions |
-| Product reviews | Trust/rejection language attached to actual SKUs |
-| Google Trends | Search-interest baselines to validate social spikes |
-| Instagram | Reels, comments, hashtag momentum |
-| User-uploaded data | First-party: surveys, owned reviews, sales data |
-| Scraped shelf & competitor data | Backend-scraped: regional competitors, what's shelved where |
+Sourcing decisions locked 2026-10 (see *Ingestion policy* below).
 
-### Candidate F&B-specific signals to evaluate
+**Social & planning signals**
 
-The F&B world emits far more structured signal than general social data. To
-evaluate for v1/v2:
+| Source | Access | What it gives us |
+| --- | --- | --- |
+| TikTok | [TikTok-Api](https://github.com/davidteather/TikTok-Api), adapter-wrapped | Trends, sounds, comments, engagement — the fastest F&B signal stream |
+| Reddit | Official API, curated subreddit list (~40–60 food subs) | Threads & comments: honest enthusiasm and rejection language |
+| YouTube | Official API | Comments, review/trend video reactions |
+| X / Twitter | API/scrape | Trend chatter, launch reactions |
+| Instagram | Scrape | Reels, comments, hashtag momentum |
+| Pinterest | Trends page + Pinterest Predicts report | Planning-intent signals ("mini desserts up 529%") |
 
-- **Menu intelligence** — flavor/menu penetration trackers (the Datassential,
-  Spate, Mintel category of data) as validation ground truth.
-- **Delivery & grocery apps** — Instacart/DoorDash/UberEats trend reports and
-  review corpora.
-- **Recipes & cooking sites** — what people actually cook (Allrecipes, Tasty
-  comments) — leading indicator for packaged F&B.
-- **Pinterest trends** — "mini desserts up 529%" style planning signals.
-- **Regulatory & recall feeds** — FDA/USDA data; a recall wave is a trust signal.
-- **Store circulars & grocery price data** — pricing/promotion landscape.
+**Commerce, reviews & shelf**
+
+| Source | Access | What it gives us |
+| --- | --- | --- |
+| Walmart reviews | Direct page scraping (first SKU-attached corpus) | Trust/rejection language attached to actual SKUs |
+| Kroger product & price API | Official developer API | Shelf/pricing ground truth, price by ZIP |
+| Flipp | Aggregated circulars | Pricing/promotion landscape across US chains |
+| Google Trends | pytrends | Search-interest baselines to validate social spikes |
+
+**Grounding, context & events**
+
+| Source | Access | What it gives us |
+| --- | --- | --- |
+| Census ACS / BLS / USDA ERS / CDC NHANES | Official APIs & CSVs | Persona grounding: demographics, food spend, food access, real dietary intake by region |
+| FDA + USDA FSIS recall feeds | RSS/API | Recall waves as trust signals; agents react |
+| Seasonality | NOAA weather + holiday/event calendar | Simulated people react to seasons (grilling, pumpkin spice, January diets) |
+| Food-media event feeds | Scrape: Food Dive, Food Navigator-USA, BevNET | Structured launch/failure events the sim reacts to |
+| User-uploaded surveys | CSV importer (v1: survey exports only) | First-party declared demographics & stated preferences |
+
+### Ingestion policy (locked 2026-10)
+
+- **Languages:** English + Spanish at ingest. US is the second-largest
+  Spanish-speaking country; ignoring it is a known blind spot we're choosing
+  to close early.
+- **Geography:** every signal carries ZIP + county where derivable; personas
+  cluster at county level.
+- **Backfill:** 90 days of history on each adapter's first run — enough for
+  trend velocity, bounded crawl cost.
+- **Storage:** raw payload (JSONB) + normalized human-signal record. Raw is
+  re-processable when the schema evolves.
+- **Author identity:** public handles stored as-is. Provenance — showing the
+  real person behind a signal — is core to the product; review if legal asks.
+- **Shelf refresh:** weekly prices / monthly full assortment. Demo-mode shelf
+  coverage: Walmart, Kroger, Target (top 3).
+- **Trend verification:** a trend claim earns "verified" only when corroborated
+  by ≥2 independent source families (e.g. TikTok + Reddit, or social +
+  search). Enforced in the trend feed, not just by convention.
+- **Buy vs build:** build/scrape only. Paid listening platforms (Brandwatch,
+  Spate, Tastewise, Datassential) may be consulted as validation ground truth
+  but are not data feeds.
+
+### Candidates for v2+
+
+Deferred sources, roughly in priority order:
+
+- **Menu intelligence** — Datassential/Spate/Mintel as validation ground truth.
+- **Delivery & grocery apps** — Instacart/DoorDash/UberEats review corpora and
+  availability by ZIP.
+- **Recipes & cooking sites** — Allrecipes, Tasty comments; leading indicator
+  for packaged F&B.
 - **Google Maps / Yelp reviews** — regional taste maps and complaint language.
-- **Published forecast reports** — McCormick Flavor Forecast, Whole Foods Trends
-  Council, National Restaurant Association "What's Hot" — as sanity checks.
+- **Beverage verticals** — Untappd, Vivino: review-heavy beer/wine communities.
+- **DTC review platforms** — Yotpo/Bazaarvoice endpoints: one integration,
+  hundreds of DTC F&B brands.
+- **Local chatter** — Facebook Groups, Nextdoor: hyperlocal taste signal.
+- **Menu/LTO tracker** — chain menu-page scraping for limited-time-offer
+  launches; trade-show exhibitor lists (Expo West, Sweets & Snacks).
+- **Forecast reports** — McCormick Flavor Forecast, Whole Foods Trends Council,
+  NRA "What's Hot" as sanity checks.
+- **Food podcasts** — Sporkful, Taste Radio transcripts (needs summarization
+  pipeline).
+- **Job postings** — new-store openings, ghost kitchens, CPG expansion signals.
 
 > **Note on TikTok-Api:** it is an unofficial library and breaks often as TikTok
 > changes. Treat it as one signal among several, never the sole basis for a trend
@@ -168,7 +214,8 @@ return rate to saved snapshots, free→paid conversion after the 35 searches.
 | Layer | Choice | Notes |
 | --- | --- | --- |
 | Backend | **Python** | Natural fit for scraping pipelines + data science (clustering, signal processing) |
-| Frontend | **React + Vite** | SPA |
+| Frontend | **Next.js 16 (App Router) + shadcn/ui** | SSR/SSG shell for the dashboard, sim UI, and demo mode |
+| Map | **Leaflet + react-leaflet** | OSM base tiles; signal / shelf / persona overlays |
 | LLM | **DeepSeek** (single provider v1) | Persona reasoning + signal summarization |
 | Database | **PostgreSQL** | See below |
 
@@ -195,7 +242,7 @@ Yes — Postgres runs locally, and the demo setup is deliberately boring:
         │           ▼                  ▼                    ▼
         └────► trend feed ◄──── human signal cards ◄── sim results
                         │
-                   FastAPI backend ──► React + Vite frontend
+                   FastAPI backend ──► Next.js 16 + shadcn/ui frontend
 ```
 
 - **Ingestion service** — per-source adapters normalizing everything into
