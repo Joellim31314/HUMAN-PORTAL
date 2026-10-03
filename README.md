@@ -5,14 +5,15 @@
 HUMAN PORTAL helps a food or drink founder decide *where in London* to launch a product.
 You describe the product and your assumptions, and it:
 
-1. **Maps the opportunity.** Ranks London areas by where the product is most likely to win, and
+1. **Maps the opportunity.** Ranks London areas by how well the product sells to simulated
+   local shoppers, and
    shows the evidence behind each area (live posts from Reddit and Stack Exchange).
 2. **Checks your bets.** Flags where the evidence confirms or contradicts what you guessed
    about your buyer and your best location.
 3. **Simulates real shoppers.** Runs the product past **2,000 simulated Londoners** for a week
    and shows who saw it, who wanted it, who bought it, and why the rest didn't.
 
-![Research map](tmp-images/hp-atom-theme-check.png)
+![Research map](tmp-images/well-truly-research.png)
 
 ---
 
@@ -67,8 +68,10 @@ If the backend isn't on `localhost:8000`, set `NEXT_PUBLIC_API_URL` for the fron
 ## How to use it (demo walkthrough, about 3 minutes)
 
 1. **Land on the map.** The home page opens on the Research map with an example product
-   (*Hojicha Bloom*, a £3.50 ready-to-drink tea), so you can see results straight away.
-2. **Read the ranked areas.** The left list ranks London areas by opportunity score. Click an
+   (*Well & Truly Cheese & Jalapeño Thins*, a £2.80 snack), so you can see results straight away.
+2. **Read the ranked areas.** The left list ranks London areas by opportunity score. When the
+   backend is running you'll see a **Live ranking** badge: each area is scored by running the
+   simulated shoppers with your product. Click an
    area or its circle on the map to open the **evidence sidebar**, with the score breakdown and
    live posts about the category.
 3. **Check "Your bets vs the signals".** The strip at the top shows which of the founder's
