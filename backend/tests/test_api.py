@@ -1,4 +1,5 @@
 import asyncio
+import json
 import subprocess
 import sys
 import time
@@ -84,8 +85,9 @@ def test_population(api):
     assert summary["total"] == 3 and summary["borough"] == {"Tower Hamlets": 3}
 
 
-def test_simulation_and_cache(api):
-    product = {"name": "Demo drink", "category": "soft_drink", "description": "A drink", "price_gbp": 2}
+def test_simulation_and_cache(api, monkeypatch):
+    product = {"name": "Demo drink", "category": "soft_drink", "description": "A drink", "price_gbp": 2,
+               "stockists": {"coverage": 1}}
     response = api.post("/api/simulations", json=product)
     assert response.status_code == 202
     sim_id = response.json()["id"]
@@ -114,6 +116,32 @@ def test_simulation_and_cache(api):
     store._simulations.clear()
     store._traces.clear()
     assert api.get(f"/api/simulations/{sim_id}/agents/a0").status_code == 200
+    replay = api.get(f"/api/simulations/{sim_id}/playback").json()
+    assert [a["id"] for a in replay["agents"]] == ["a0", "a1", "a2"]
+    assert replay["agents"][0]["outcome"] == "bought" and replay["agents"][0]["weekday"] == []
+    assert replay["events"] == [[0, 2, "bought"], [1, 2, "rejected"], [2, 2, "rejected"]]
+    assert replay["stores"] == [{"id": "s1", "name": "Tesco", "lat": 51.51, "lon": -.03}]
+    assert api.get("/api/simulations/missing/playback").status_code == 404
+
+    chat = f"/api/simulations/{sim_id}/agents/a0/chat"
+    ask = {"messages": [{"role": "retailer", "content": "Would you buy it again?"}]}
+    assert api.post(chat, json=ask).json()["source"] == "unavailable"  # no key in tests
+    assert api.post(f"/api/simulations/{sim_id}/agents/missing/chat", json=ask).status_code == 404
+    assert api.post(chat, json={"messages": [{"role": "agent", "content": "Hi"}]}).status_code == 422
+    seen = {}
+
+    async def fake_chat(system, user, **kwargs):
+        seen.update(json.loads(user))
+        return {"reply": "Yes, if it stays under three quid."}
+    from app.llm import chat as chat_module
+    monkeypatch.setattr(chat_module, "llm_available", lambda: True)
+    monkeypatch.setattr(chat_module, "chat_json", fake_chat)
+    turns = [{"role": "retailer", "content": "Hi"}, {"role": "agent", "content": "Hello"},
+             {"role": "retailer", "content": "Would you buy it again?"}]
+    assert api.post(chat, json={"messages": turns}).json() == {
+        "reply": "Yes, if it stays under three quid.", "source": "llm"}
+    assert seen["retailer_asks"] == "Would you buy it again?"
+    assert len(seen["conversation_so_far"]) == 2 and seen["outcome"]["outcome"] == "bought"
 
 
 def test_simulation_failure(api, monkeypatch):

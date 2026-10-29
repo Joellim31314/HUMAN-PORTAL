@@ -285,6 +285,52 @@ class SimulationResult(BaseModel):
     report: Optional[Report] = None
 
 
+class ChatTurn(BaseModel):
+    role: Literal["retailer", "agent"]
+    content: str = Field(min_length=1, max_length=600)
+
+
+class ChatRequest(BaseModel):
+    messages: list[ChatTurn] = Field(min_length=1, max_length=40)
+
+
+class ChatReply(BaseModel):
+    reply: str
+    source: Literal["llm", "unavailable"]
+
+
+PlaybackKind = Literal["seen", "noticed", "missed", "rejected", "bought"]
+
+
+class PlaybackAgent(BaseModel):
+    id: str
+    name: str
+    archetype: Archetype
+    outcome: Outcome
+    weekday: list[tuple[float, float]]  # 7 (lat, lon) points, ordered as SLOTS
+    weekend: list[tuple[float, float]]
+
+
+class PlaybackStore(BaseModel):
+    id: str
+    name: str
+    lat: float
+    lon: float
+
+
+class Playback(BaseModel):
+    """Compact replay of one run for the animated week map.
+
+    events are (agent index, tick, kind) with tick = day index * len(SLOTS) + slot index.
+    """
+
+    days: list[str]
+    slots: list[str]
+    agents: list[PlaybackAgent]
+    stores: list[PlaybackStore]
+    events: list[tuple[int, int, PlaybackKind]]
+
+
 class AgentTrace(BaseModel):
     agent: Agent
     outcome: AgentOutcome

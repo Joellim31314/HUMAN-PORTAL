@@ -86,13 +86,17 @@ def save_traces(sim_id: str, traces: dict[str, list[dict]]) -> None:
     _trace_path(sim_id).write_text(json.dumps(traces), "utf-8")
 
 
+def get_traces(sim_id: str) -> dict[str, list[dict]]:
+    if sim_id not in _traces and _trace_path(sim_id).exists():
+        _traces[sim_id] = json.loads(_trace_path(sim_id).read_text("utf-8"))
+    return _traces.get(sim_id, {})
+
+
 def get_agent_trace(sim_id: str, agent_id: str) -> AgentTrace | None:
     result = get_simulation(sim_id)
     agent = agents_by_id().get(agent_id)
     if result is None or agent is None:
         return None
-    if sim_id not in _traces and _trace_path(sim_id).exists():
-        _traces[sim_id] = json.loads(_trace_path(sim_id).read_text("utf-8"))
     outcome = next((o for o in result.outcomes if o.agent_id == agent_id), None)
     if outcome is None:
         return None
@@ -101,7 +105,7 @@ def get_agent_trace(sim_id: str, agent_id: str) -> AgentTrace | None:
         {
             "agent": agent,
             "outcome": outcome,
-            "trace": _traces.get(sim_id, {}).get(agent_id, []),
+            "trace": get_traces(sim_id).get(agent_id, []),
             "interview": interview,
         }
     )

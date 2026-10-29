@@ -11,6 +11,19 @@ import type {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
 
+// Hosted demo (Vercel): replay the example product's pre-run simulations from
+// public/demo (exported by backend/app/pipeline/export_demo.py) instead of
+// calling the Python backend. Chat goes through the /api/chat route handler.
+export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === "1"
+const DEMO_PRODUCT_SLUG = "well-and-truly-thins"
+
+function demoJson<T>(path: string): Promise<T> {
+  return fetch(`/demo/${path}`).then((res) => {
+    if (!res.ok) throw new Error(`/demo/${path} -> ${res.status}`)
+    return res.json() as Promise<T>
+  })
+}
+
 // Research areas -> census borough names used by the backend.
 const AREA_BOROUGH: Record<string, string> = {
   walthamstow: "Waltham Forest",
@@ -42,7 +55,7 @@ const REASON_DRIVER: Record<string, string> = {
   BOUGHT: "bought",
 }
 
-type Outcome = "never_exposed" | "not_noticed" | "no_need" | "rejected" | "bought"
+export type Outcome = "never_exposed" | "not_noticed" | "no_need" | "rejected" | "bought"
 
 interface ApiOutcome {
   agent_id: string
@@ -85,6 +98,7 @@ interface AgentPoint {
 }
 
 export interface LiveExtras {
+  simId: string
   borough: string
   storesStocking: number
   funnel: NonNullable<ApiResult["funnel"]>
@@ -113,6 +127,10 @@ export async function scoreAreas(
   product: ProductAnswers
 ): Promise<Record<string, LiveAreaScore> | null> {
   try {
+    if (DEMO_MODE) {
+      if (product.slug !== DEMO_PRODUCT_SLUG) return null
+      return rankBySlug(await demoJson<AreaScoreResponse>("areas.json"))
+    }
     const res = await fetch(`${API_URL}/api/areas/score`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -120,21 +138,23 @@ export async function scoreAreas(
       signal: AbortSignal.timeout(120_000),
     })
     if (!res.ok) return null
-    const data = await res.json()
-    const out: Record<string, LiveAreaScore> = {}
-    for (const a of data.areas as {
-      borough: string
-      rank: number
-      score: number
-      bought: number
-    }[]) {
-      const slug = BOROUGH_AREA[a.borough]
-      if (slug) out[slug] = { rank: a.rank, score: a.score, bought: a.bought }
-    }
-    return out
+    return rankBySlug(await res.json())
   } catch {
     return null
   }
+}
+
+interface AreaScoreResponse {
+  areas: { borough: string; rank: number; score: number; bought: number }[]
+}
+
+function rankBySlug(data: AreaScoreResponse) {
+  const out: Record<string, LiveAreaScore> = {}
+  for (const a of data.areas) {
+    const slug = BOROUGH_AREA[a.borough]
+    if (slug) out[slug] = { rank: a.rank, score: a.score, bought: a.bought }
+  }
+  return out
 }
 
 function textOf(p: ProductAnswers) {
@@ -206,7 +226,9 @@ async function getJson<T>(path: string, init?: RequestInit): Promise<T> {
 
 let agentCache: Promise<Map<string, AgentPoint>> | null = null
 function agentIndex() {
-  agentCache ??= getJson<AgentPoint[]>("/api/agents").then(
+  agentCache ??= (
+    DEMO_MODE ? demoJson<AgentPoint[]>("agents.json") : getJson<AgentPoint[]>("/api/agents")
+  ).then(
     (rows) => new Map(rows.map((a) => [a.id, a]))
   )
   return agentCache
@@ -229,18 +251,27 @@ export async function runLiveSimulation(
   onProgress?: (msg: string) => void
 ): Promise<{ result: SimResult; extras: LiveExtras }> {
   const body = toProductInput(product, areaSlug)
+  if (DEMO_MODE && product.slug !== DEMO_PRODUCT_SLUG) {
+    throw new Error("The hosted demo only replays the example product")
+  }
   const [agents, started] = await Promise.all([
     agentIndex(),
-    getJson<{ id: string }>("/api/simulations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    }),
+    DEMO_MODE
+      ? { id: areaSlug } // demo runs are stored per area
+      : getJson<{ id: string }>("/api/simulations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }),
   ])
 
   let data: ApiResult
   const deadline = Date.now() + 120_000
   for (;;) {
+    if (DEMO_MODE) {
+      data = await demoJson<ApiResult>(`sims/${areaSlug}.json`)
+      break
+    }
     data = await getJson<ApiResult>(`/api/simulations/${started.id}`)
     if (data.status === "done") break
     if (data.status === "failed") throw new Error(data.error ?? "simulation failed")
@@ -341,6 +372,7 @@ export async function runLiveSimulation(
       takeaway,
     },
     extras: {
+      simId: started.id,
       borough: body.stockists.boroughs[0] ?? "London",
       storesStocking: data.stores_stocking,
       funnel: data.funnel!,
@@ -348,4 +380,80 @@ export async function runLiveSimulation(
       report,
     },
   }
+}
+
+// --- Week playback (GET /api/simulations/{id}/playback) ---------------------
+
+export type PlaybackKind = "seen" | "noticed" | "missed" | "rejected" | "bought"
+
+export interface Playback {
+  days: string[]
+  slots: string[]
+  agents: {
+    id: string
+    name: string
+    archetype: string
+    outcome: Outcome
+    weekday: [number, number][]
+    weekend: [number, number][]
+  }[]
+  stores: { id: string; name: string; lat: number; lon: number }[]
+  /** [agent index, tick, kind]; tick = day * slots.length + slot, sorted by tick */
+  events: [number, number, PlaybackKind][]
+}
+
+export interface AgentTrace {
+  agent: {
+    id: string
+    name: string
+    age: number
+    borough: string
+    archetype: string
+    occupation: string | null
+    work_label: string | null
+  }
+  outcome: { outcome: Outcome; reason: string }
+  trace: { day: string; slot: string; step: string; passed: boolean; detail: string }[]
+  interview: { quote: string } | null
+}
+
+export function getPlayback(simId: string) {
+  return DEMO_MODE
+    ? demoJson<Playback>(`sims/${simId}.playback.json`)
+    : getJson<Playback>(`/api/simulations/${simId}/playback`)
+}
+
+const demoAgents = new Map<string, Promise<Record<string, AgentTrace>>>()
+
+export async function getAgentTrace(simId: string, agentId: string) {
+  if (!DEMO_MODE) return getJson<AgentTrace>(`/api/simulations/${simId}/agents/${agentId}`)
+  if (!demoAgents.has(simId)) demoAgents.set(simId, demoJson(`sims/${simId}.agents.json`))
+  const trace = (await demoAgents.get(simId)!)[agentId]
+  if (!trace) throw new Error(`No demo trace for ${agentId}`)
+  return trace
+}
+
+export interface ChatTurn {
+  role: "retailer" | "agent"
+  content: string
+}
+
+export interface ChatReply {
+  reply: string
+  source: "llm" | "unavailable"
+}
+
+export function chatWithAgent(simId: string, agentId: string, messages: ChatTurn[]) {
+  const init = {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(DEMO_MODE ? { simId, agentId, messages } : { messages }),
+  }
+  if (!DEMO_MODE) {
+    return getJson<ChatReply>(`/api/simulations/${simId}/agents/${agentId}/chat`, init)
+  }
+  return fetch("/api/chat", init).then(async (res) => {
+    if (!res.ok && res.status !== 429) throw new Error(`/api/chat -> ${res.status}`)
+    return res.json() as Promise<ChatReply>
+  })
 }

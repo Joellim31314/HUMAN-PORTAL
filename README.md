@@ -107,6 +107,33 @@ The population ships pre-built in `backend/data/processed/`, so there's nothing 
 
 ---
 
+## Hosted demo (Vercel)
+
+The hosted version runs without the Python backend. It replays real, pre-run simulations of the
+example product in all 7 areas from `frontend/public/demo/`. Chatting with a Londoner goes through
+a small serverless function (`frontend/src/app/api/chat/route.ts`) that calls DeepSeek. Testing
+your own product needs the full local setup above.
+
+**Deploy:** import the repo in Vercel, set **Root Directory** to `frontend`, and add these
+environment variables:
+
+| Variable | Value |
+|---|---|
+| `NEXT_PUBLIC_DEMO_MODE` | `1` (required) |
+| `DEEPSEEK_API_KEY` | Your key. Leave it out to switch chat off |
+| `CHAT_LIMIT_PER_HOUR` | Messages per visitor per hour (default 20) |
+| `CHAT_DAILY_CAP` | Messages per day across the site (default 500) |
+| `CHAT_DISABLED` | `1` turns chat off without removing the key |
+
+The chat limits are best-effort and kept per server instance, so your DeepSeek balance is the
+hard spending limit.
+
+**Refreshing the demo data** after changing the engine: with the backend set up, run
+`python -m app.pipeline.export_demo` from `backend/`. It reuses cached runs, so only new runs
+call DeepSeek.
+
+---
+
 ## Project layout
 
 ```

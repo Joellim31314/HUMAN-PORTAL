@@ -62,6 +62,8 @@ export async function fetchLiveSignals(
   query: string,
   area?: string
 ): Promise<LiveSignalResponse> {
+  // The hosted demo has no backend; the sidebar falls back to its fixture signals.
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === "1") throw new Error("Live signals need the backend")
   const params = new URLSearchParams({ query, limit: "12" })
   if (area) params.set("area", area)
   const res = await fetch(`${API_URL}/api/signals/search?${params}`, {

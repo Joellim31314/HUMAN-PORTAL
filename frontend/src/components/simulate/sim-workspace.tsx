@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 
 import { BacktestCard } from "@/components/simulate/backtest-card"
+import { WeekPlayback } from "@/components/simulate/week-playback"
 import { StagedLoader } from "@/components/staged-loader"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -23,7 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { AREAS, EXAMPLE_PRODUCT, SIM_RESULTS } from "@/lib/fixtures"
-import { runLiveSimulation, type LiveExtras } from "@/lib/sim-api"
+import { DEMO_MODE, runLiveSimulation, type LiveExtras } from "@/lib/sim-api"
 import { useProduct } from "@/lib/storage"
 import type { AgentNarrative, SimResult, Verdict } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -182,10 +183,23 @@ export function SimWorkspace({
             <>
               {result.clusters.length} persona clusters, grounded in{" "}
               {area.signals.length} scraped signals from this area.
-              {failed && " (Offline demo data — simulation backend unreachable.)"}
+              {failed &&
+                (DEMO_MODE
+                  ? " (Example data. The hosted demo replays Well & Truly only; run the project locally to simulate your own product.)"
+                  : " (Offline demo data — simulation backend unreachable.)")}
             </>
           )}
         </p>
+
+        {extras && !running && (
+          <div className="mt-6">
+            <WeekPlayback
+              simId={extras.simId}
+              center={area.center}
+              productName={product.name}
+            />
+          </div>
+        )}
 
         <div className="mt-6 rounded-xl border bg-card p-4 shadow-xs">
           <div className="flex h-3 w-full overflow-hidden rounded-full">
