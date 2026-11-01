@@ -4,11 +4,7 @@
 
 **[Try the live demo](https://human-portal-omega.vercel.app/research)** · no sign-up or setup needed
 
-<a href="https://github.com/Joellim31314/HUMAN-PORTAL/releases/download/demo-video/human-portal-demo.mp4">
-  <img src="tmp-images/demo-video-thumb.jpg" width="360" alt="Play the 43-second demo video: 2,000 Londoners, 158 shops stocking it, only 22 bought it. So why didn't the rest?">
-</a>
-
-**[▶ Watch the 43-second demo](https://github.com/Joellim31314/HUMAN-PORTAL/releases/download/demo-video/human-portal-demo.mp4)** (downloads an MP4)
+https://github.com/user-attachments/assets/e96fe085-4a37-4680-888c-c5574a7550f5
 
 The video follows one simulated week in Camden. 158 shops stock a new snack, but only 22 of
 2,000 simulated Londoners buy it. Then you ask one of them why, and the answer is placement,
