@@ -59,13 +59,13 @@ Open **http://localhost:3000**.
 
 > **No API keys needed to try it.** Without a DeepSeek key, shopper interviews use built-in
 > template answers. If the backend isn't running, the app falls back to its example data,
-> so every screen still works.
+> so every screen still works. Chatting with a Londoner is the one feature that does need a key.
 
 ### Optional settings (`backend/.env`)
 
 | Variable | What it does |
 |---|---|
-| `DEEPSEEK_API_KEY` | Turns on AI-written shopper interviews, the AI summary report and sentiment tagging of live posts |
+| `DEEPSEEK_API_KEY` | Turns on chat with simulated Londoners, AI-written shopper interviews, the AI summary report and sentiment tagging of live posts |
 | `POPULATION_SIZE` | Number of simulated shoppers (default 2000) |
 | `INTERVIEW_COUNT` | How many shoppers get interviewed after a run (default 80) |
 
@@ -93,6 +93,9 @@ If the backend isn't on `localhost:8000`, set `NEXT_PUBLIC_API_URL` for the fron
      doesn't fit their diet, loyal to another brand)
    - **which groups converted** (age, area, lifestyle, income)
    - **interviews** with simulated shoppers, and an **action list**
+6. **Watch the week and ask why.** The simulation opens with a replay of all 2,000 Londoners on
+   a map. Click any dot to see that person's week, then open **Ask [name]** to chat with them.
+   Chat needs a DeepSeek key.
 
 ---
 
@@ -120,7 +123,8 @@ The population ships pre-built in `backend/data/processed/`, so there's nothing 
 The hosted version runs without the Python backend. It replays real, pre-run simulations of the
 example product in all 7 areas from `frontend/public/demo/`. Chatting with a Londoner goes through
 a small serverless function (`frontend/src/app/api/chat/route.ts`) that calls DeepSeek. Testing
-your own product needs the full local setup above.
+your own product needs the full local setup above. Live posts and live ranking need the local
+backend, so the hosted demo shows example evidence.
 
 **Deploy:** import the repo in Vercel, set **Root Directory** to `frontend`, and add these
 environment variables:
