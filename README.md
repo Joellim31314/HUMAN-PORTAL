@@ -97,6 +97,8 @@ If the backend isn't on `localhost:8000`, set `NEXT_PUBLIC_API_URL` for the fron
    a map. Click any dot to see that person's week, then open **Ask [name]** to chat with them.
    Chat needs a DeepSeek key.
 
+![Week replay of 2,000 simulated Londoners in Camden, with the shops stocking the product and first-person shopper quotes](tmp-images/week-simulation.png)
+
 ---
 
 ## How the simulation works (short version)
