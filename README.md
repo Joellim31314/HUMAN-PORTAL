@@ -2,6 +2,18 @@
 
 **Where should I sell this product?**
 
+**[Try the live demo](https://human-portal-omega.vercel.app/research)** · no sign-up or setup needed
+
+<a href="https://github.com/Joellim31314/HUMAN-PORTAL/releases/download/demo-video/human-portal-demo.mp4">
+  <img src="tmp-images/demo-video-thumb.jpg" width="360" alt="Play the 43-second demo video: 2,000 Londoners, 158 shops stocking it, only 22 bought it. So why didn't the rest?">
+</a>
+
+**[▶ Watch the 43-second demo](https://github.com/Joellim31314/HUMAN-PORTAL/releases/download/demo-video/human-portal-demo.mp4)** (downloads an MP4)
+
+The video follows one simulated week in Camden. 158 shops stock a new snack, but only 22 of
+2,000 simulated Londoners buy it. Then you ask one of them why, and the answer is placement,
+not price.
+
 HUMAN PORTAL helps a food or drink founder decide *where in London* to launch a product.
 You describe the product and your assumptions, and it:
 
@@ -148,3 +160,15 @@ UX-FLOW.md  The product flow in detail
 cd backend
 pytest
 ```
+
+---
+
+## Credits and licence
+
+Results are simulated, not real sales data. Not affiliated with Well & Truly.
+
+Map data © OpenStreetMap contributors. Tiles © Esri. Contains ONS data, Census 2021, under the
+Open Government Licence.
+
+The code is under the [MIT License](LICENSE). Third-party data, images and brand names keep
+their own terms, including OpenStreetMap data (ODbL).
